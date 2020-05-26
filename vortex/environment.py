@@ -15,11 +15,32 @@ class Environment:
         self.motor_step = 0.0314159    # bipolar stepper motor step size is 1.8 deg 
         self.motor_angle_current = 0    # this comes from the motor constraint  
         self.motor_angle_command = 0    # motor command, might be different from the actual motor angle
-
-
-    def reset(self):
+        self.PI = 3.14159265359
         self.application = vxatp.VxATPConfig.createApplication(self, 'Inverted Pendulum', self.config_file)
         self.application.setSyncMode(VxSim.kSyncNone)   # set free running
+        vxatp.VxATPUtils.requestApplicationModeChangeAndWait(self.application, VxSim.kModeEditing)
+
+        # limits of state variables, motor angle, speed, pendulum angle, speed
+        self.limits = [[-self.PI, self.PI],
+                       [-0.6*self.PI, 0.6*self.PI],
+                       [-2*self.PI, 2*self.PI],
+                       [-4*self.PI, 4*self.PI]]
+
+        # discretized space size
+        num_disc_states = 15
+        self.disc_state_size = [(i[1] - i[0])/num_disc_states for i in self.limits]
+
+        # space/action size
+        self.state_space_size = [num_disc_states]*4
+        self.action_space_size = 2
+
+    def reset(self):
+        # self.application = None
+        self.mechanism = None
+        self.interface = None
+        self.application.getSimulationFileManager().unloadObject(self.content_file)
+        vxatp.VxATPUtils.requestApplicationModeChangeAndWait(self.application, VxSim.kModeEditing)
+
         obj = self.application.getSimulationFileManager().loadObject(self.content_file)
         vxatp.VxATPUtils.requestApplicationModeChangeAndWait(self.application, VxSim.kModeSimulating)
 
@@ -56,11 +77,28 @@ class Environment:
         self.application.update()
 
         # read current state
+        motor_angle = self.interface.getExtension().getOutput('Motor Angle').getValue()
+        motor_velocity = self.interface.getExtension().getOutput('Motor Angular Velocity').getValue()        
         pendulum_angle = self.interface.getExtension().getOutput('Pendulum Angle').getValue()
         pendulum_velocity = self.interface.getExtension().getOutput('Pendulum Angular Velocity').getValue()
-        state = [pendulum_angle, pendulum_velocity]
+        if pendulum_angle > 2*self.PI:
+            pendulum_angle = pendulum_angle - int(pendulum_angle/2*self.PI)*2*self.PI
+        elif pendulum_angle < -2*self.PI:
+            pendulum_angle = pendulum_angle + int(-pendulum_angle/2*self.PI)*2*self.PI
 
-        return state, self.reward
+        state = [motor_angle, motor_velocity, pendulum_angle, pendulum_velocity]
+        disc_state = self.discretize_state(state)
+
+        return disc_state, self.reward
+
+    # gets a continous state and returns a discretized state
+    def discretize_state(self, state):
+        disc_state = []
+        for i in range(len(state)):
+            disc_state.append(int((state[i] - self.limits[i][0])/self.disc_state_size[i]))
+        
+        return disc_state
+
 
     # returns a random action
     # 0: rotate one step left
