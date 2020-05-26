@@ -13,12 +13,10 @@ class Environment:
         self.content_file = 'Mechanism.vxmechanism'
         self.episode = 0
         self.motor_step = 0.0314159    # bipolar stepper motor step size is 1.8 deg 
-        self.motor_angle_current = 0    # this comes from the motor constraint  
-        self.motor_angle_command = 0    # motor command, might be different from the actual motor angle
         self.PI = 3.14159265359
         self.application = vxatp.VxATPConfig.createApplication(self, 'Inverted Pendulum', self.config_file)
         self.application.setSyncMode(VxSim.kSyncNone)   # set free running
-        vxatp.VxATPUtils.requestApplicationModeChangeAndWait(self.application, VxSim.kModeEditing)
+        self.obj = self.application.getSimulationFileManager().loadObject(self.content_file)
 
         # limits of state variables, motor angle, speed, pendulum angle, speed
         self.limits = [[-self.PI, self.PI],
@@ -34,20 +32,28 @@ class Environment:
         self.state_space_size = [num_disc_states]*4
         self.action_space_size = 2
 
+    ''' 
+    reset the environment at the start of each episode
+    '''
     def reset(self):
-        # self.application = None
         self.mechanism = None
         self.interface = None
-        self.application.getSimulationFileManager().unloadObject(self.content_file)
-        vxatp.VxATPUtils.requestApplicationModeChangeAndWait(self.application, VxSim.kModeEditing)
+        self.motor_angle_current = 0    # this comes from the motor constraint  
+        self.motor_angle_command = 0    # motor command, might be different from the actual motor angle
 
-        obj = self.application.getSimulationFileManager().loadObject(self.content_file)
+        # unload the mechanism object if it exists
+        vxatp.VxATPUtils.requestApplicationModeChangeAndWait(self.application, VxSim.kModeEditing)
+        if self.obj:
+            self.application.getSimulationFileManager().unloadObject(self.obj)       
+
+        # recreate the mechanism object from the content file
+        self.obj = self.application.getSimulationFileManager().loadObject(self.content_file)
         vxatp.VxATPUtils.requestApplicationModeChangeAndWait(self.application, VxSim.kModeSimulating)
 
-        self.mechanism = VxSim.MechanismInterface(obj)
+        # reassign the mechanism variable
+        self.mechanism = VxSim.MechanismInterface(self.obj)
         self.interface = self.mechanism.findExtensionByName('Agent Interface')
         self.application.update()
-        obj = None
 
         # update hud
         self.episode += 1
@@ -56,10 +62,15 @@ class Environment:
         # reset step reward
         self.reward = 0
 
+        print('--------------- environment was successfully reset --------------------')
+        print('--------------------- starting a new episode--------------------')
+
         # return the current state
         return [0, 0]
 
-   # step the simulation and return the state
+    '''
+    step the simulation and return the state
+    '''
     def step(self, action):
         # decode the action
         # rotate motor one step left
@@ -86,12 +97,15 @@ class Environment:
         elif pendulum_angle < -2*self.PI:
             pendulum_angle = pendulum_angle + int(-pendulum_angle/2*self.PI)*2*self.PI
 
+        # discretize the state
         state = [motor_angle, motor_velocity, pendulum_angle, pendulum_velocity]
         disc_state = self.discretize_state(state)
 
         return disc_state, self.reward
 
-    # gets a continous state and returns a discretized state
+    '''
+    gets a continous state and returns a discretized state
+    '''
     def discretize_state(self, state):
         disc_state = []
         for i in range(len(state)):
@@ -99,9 +113,10 @@ class Environment:
         
         return disc_state
 
-
-    # returns a random action
-    # 0: rotate one step left
-    # 1: rotate one step right
+    '''
+    returns a random action
+    0: rotate one step left
+    1: rotate one step right
+    '''
     def sample(self):
         return random.choice([0, 1])
