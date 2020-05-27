@@ -2,6 +2,7 @@ import sys
 import os
 import time
 import random
+import numpy as np 
 vortex_folder = r'C:\CM Labs\Vortex Studio 2020a\bin'
 sys.path.append(vortex_folder)
 import VxSim
@@ -18,18 +19,26 @@ class Environment:
         self.application.setSyncMode(VxSim.kSyncNone)   # set free running
         self.obj = self.application.getSimulationFileManager().loadObject(self.content_file)
 
-        # limits of state variables, motor angle, speed, pendulum angle, speed
-        self.limits = [[-self.PI, self.PI],
-                       [-0.6*self.PI, 0.6*self.PI],
-                       [-2*self.PI, 2*self.PI],
-                       [-4*self.PI, 4*self.PI]]
-
         # discretized space size
-        num_disc_states = 15
-        self.disc_state_size = [(i[1] - i[0])/num_disc_states for i in self.limits]
+        NUM_DISCRETE = 30
+        self.num_states = 2
 
-        # space/action size
-        self.state_space_size = [num_disc_states]*4
+        # set up state limits
+        if self.num_states == 4:
+            self.limits_low = np.array([-self.PI, -0.6*self.PI, -2*self.PI, -8*self.PI])
+            self.limits_high = np.array([self.PI, 0.6*self.PI, 2*self.PI, 8*self.PI])
+        elif self.num_states == 2:
+            self.limits_low = np.array([-2*self.PI, -8*self.PI])
+            self.limits_high = np.array([2*self.PI, 8*self.PI])
+
+        
+        # calculate discretization window
+        self.state_space_size = [NUM_DISCRETE] * self.num_states
+        self.disc_state_win_size = [0] * self.num_states
+        for i in range(self.num_states):
+            self.disc_state_win_size[i] = (self.limits_high[i] - self.limits_low[i])/self.state_space_size[i]
+
+        # action size
         self.action_space_size = 2
 
     ''' 
@@ -66,12 +75,14 @@ class Environment:
         print('--------------------- starting a new episode--------------------')
 
         # return the current state
-        return [0, 0]
+        return [0] * self.num_states
 
     '''
     step the simulation and return the state
     '''
     def step(self, action):
+        done = False
+        self.reward = 0
         # decode the action
         # rotate motor one step left
         if action == 0:
@@ -80,6 +91,7 @@ class Environment:
         # rotate motor one step right
         else:
             self.motor_angle_command += self.motor_step
+        self.motor_angle_command = min(max(self.motor_angle_command, -self.PI), self.PI)
 
         # push the motor command to the constraint
         self.interface.getExtension().getInput('Motor Position').value = self.motor_angle_command
@@ -91,15 +103,24 @@ class Environment:
         motor_angle = self.interface.getExtension().getOutput('Motor Angle').getValue()
         motor_velocity = self.interface.getExtension().getOutput('Motor Angular Velocity').getValue()        
         pendulum_angle = self.interface.getExtension().getOutput('Pendulum Angle').getValue()
-        pendulum_velocity = self.interface.getExtension().getOutput('Pendulum Angular Velocity').getValue()
+        pendulum_velocity = self.interface.getExtension().getOutput('Pendulum Angular Velocity').getValue()   
+
+        if self.num_states == 4:
+            state = np.array([motor_angle, motor_velocity, pendulum_angle, pendulum_velocity])
+
+        elif self.num_states == 2:     
+            state = np.array([pendulum_angle, pendulum_velocity])
+
         if pendulum_angle > 2*self.PI:
             pendulum_angle = pendulum_angle - int(pendulum_angle/2*self.PI)*2*self.PI
         elif pendulum_angle < -2*self.PI:
             pendulum_angle = pendulum_angle + int(-pendulum_angle/2*self.PI)*2*self.PI
 
         # discretize the state
-        state = [motor_angle, motor_velocity, pendulum_angle, pendulum_velocity]
         disc_state = self.discretize_state(state)
+
+        # reward assignment
+        self.reward = -self.PI + abs(pendulum_angle)
 
         return disc_state, self.reward
 
@@ -107,11 +128,8 @@ class Environment:
     gets a continous state and returns a discretized state
     '''
     def discretize_state(self, state):
-        disc_state = []
-        for i in range(len(state)):
-            disc_state.append(int((state[i] - self.limits[i][0])/self.disc_state_size[i]))
-        
-        return disc_state
+        discrete_state = (state - self.limits_low)/self.disc_state_win_size 
+        return list(discrete_state.astype(np.int8))  
 
     '''
     returns a random action
