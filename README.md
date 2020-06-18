@@ -53,7 +53,7 @@ python -m pip install matplotlib
 keras folder in the user profile folder. Then change the backend to ```cntk```
 
 ## Run
-- Make sure that self.config_file in ```environment.py``` is pointing to the right place
+- Make sure that ```self.config_file``` in ```environment.py``` is pointing to the right path
 - To train a model using the q table approach, run ```train_q_table.py``` in the vortex folder
 - To train a model using the dqn approach, run ```train_dqn.py``` in the vortex folder
 - To playback a trained model, modify ```q_table_file``` in ```playback.py``` to point to the trained model in vortex/models folder
