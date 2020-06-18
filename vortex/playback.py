@@ -20,7 +20,8 @@ episode_reward = 0
 
 # reset the environment
 _, current_state = env.reset(real_time)
-env.set_text('Episode {}'.format(episode))
+env.set_text('Agent learns how to stabilize')
+# env.set_text('Episode {}'.format(episode))
 
 for i in range(2000):
     # select an action based on the current state

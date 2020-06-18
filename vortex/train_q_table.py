@@ -2,8 +2,6 @@ from __future__ import print_function
 from environment import Environment
 import random
 import numpy as np
-# import matplotlib
-# import matplotlib.pyplot as plt 
 import math
 import re
 
@@ -28,7 +26,7 @@ learning_rate = 0.99
 learning_rate_decay = 1.0
 min_learning_rate = 0.01
 upright = False
-threshold = 0.174533  # 10 deg, smaller than this abgle is considered upward
+threshold = 0.174533  # 10 deg, smaller than this angle is considered upward
 
 save_every = 1000
 print_every = 100
@@ -109,7 +107,7 @@ for e in range(min_episode, max_episodes):
         else:
             action = env.sample()
         
-        # take ac action and read the consequent state
+        # take an action and read the consequent state
         raw_state, _, new_state, reward = env.step(action)
 
         # max possible q value of the next state
