@@ -1,6 +1,7 @@
 # Rotary Inverted Pendulum
 Rotary Inverted Pendulum is a classical problem in the field of control systems. 
 In this project we train a reinforcement learning agent to swing up an inverted pendulum and keep it in an upward position
+![Rotary Inverted Pendulum](media/inverted_pendulum.mp4)
 
 ## Requirements
 ### Q table approach
