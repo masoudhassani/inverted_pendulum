@@ -1,12 +1,9 @@
 from __future__ import print_function
 from environment import Environment
-import random
 import numpy as np
-import math
-import re
 import time
 import logging 
-import cntk as ck 
+
 import matplotlib
 # matplotlib.use('Qt4Agg',warn=False, force=True)
 from matplotlib import pyplot as plt
@@ -30,7 +27,7 @@ logging.basicConfig(
 ###############################################
 
 # TRAINING PARAMETERS #########################
-render = False              # if true, the gameplay will be shown
+render = True              # if true, the gameplay will be shown
 render_every = 1            # every n episode, render real time if render is True
 save_every = 200            # frequency of saving the model weights, number of episodes
 aggregate_stats_every = 5   # every n episode 

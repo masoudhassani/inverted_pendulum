@@ -1,6 +1,6 @@
-from keras.models import Sequential
-from keras.layers import Dense, Convolution2D, Flatten, Activation, Conv2D, MaxPooling2D, Dropout
-from keras.optimizers import Adam, RMSprop
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, Convolution2D, Flatten, Activation, Conv2D, MaxPooling2D, Dropout
+from tensorflow.keras.optimizers import Adam, RMSprop
 
 class CNN:
     def __init__(self, input_shape, num_actions, learning_rate=0.001):

@@ -3,18 +3,19 @@ import os
 import time
 import random
 import numpy as np 
-vortex_folder = r'C:\CM Labs\Vortex Studio 2020a\bin'
+vortex_folder = r'C:\CM Labs\Vortex Studio 2020b\bin'
 sys.path.append(vortex_folder)
-import VxSim
-import vxatp
+import Vortex
+import vxatp3
 import math
+
 
 class Environment:
     def __init__(self, render=True, pendulum_length=0.12, stacking_steps=10):
         if render:
-            self.config_file = r'E:\VTSP_Construction\content\resources\config\quality_tests_with_graphics.vxc'
+            self.config_file = r'resources\setup.vxc'
         else:
-            self.config_file = r'E:\VTSP_Construction\content\resources\config\quality_tests.vxc'
+            self.config_file = r'resources\setup_no_3d.vxc'
 
         self.render = render
         self.stacking_steps = stacking_steps
@@ -22,8 +23,8 @@ class Environment:
         self.content_file = 'Mechanism.vxmechanism'
         self.episode = 0
         self.PI = 3.14159265359
-        self.application = vxatp.VxATPConfig.createApplication(self, 'Inverted Pendulum', self.config_file)
-        self.application.setSyncMode(VxSim.kSyncNone)   # set free running
+        self.application = vxatp3.VxATPConfig.createApplication(self, 'Inverted Pendulum', self.config_file)
+        self.application.setSyncMode(Vortex.kSyncNone)   # set free running
         self.obj = self.application.getSimulationFileManager().loadObject(self.content_file)
 
         # main parameters #######################################
@@ -96,13 +97,13 @@ class Environment:
         self.downward = False
 
         # go to edit mode
-        vxatp.VxATPUtils.requestApplicationModeChangeAndWait(self.application, VxSim.kModeEditing)
+        vxatp3.VxATPUtils.requestApplicationModeChangeAndWait(self.application, Vortex.kModeEditing)
 
         # render realtime if requested otherwise free running
         if real_time and self.render:
-            self.application.setSyncMode(VxSim.kSyncSoftwareAndVSync)
+            self.application.setSyncMode(Vortex.kSyncSoftwareAndVSync)
         else:
-            self.application.setSyncMode(VxSim.kSyncNone)
+            self.application.setSyncMode(Vortex.kSyncNone)
 
         # unload the mechanism object if it exists
         if self.obj:
@@ -113,14 +114,14 @@ class Environment:
         self.obj = self.application.getSimulationFileManager().loadObject(self.content_file)
         
         # reassign the mechanism variable
-        self.mechanism = VxSim.MechanismInterface(self.obj)
+        self.mechanism = Vortex.MechanismInterface(self.obj)
         self.interface = self.mechanism.findExtensionByName('Agent Interface')
 
         # reset the motor
         self.interface.getExtension().getInput('Motor Position').value = 0       
 
         # run 
-        vxatp.VxATPUtils.requestApplicationModeChangeAndWait(self.application, VxSim.kModeSimulating)
+        vxatp3.VxATPUtils.requestApplicationModeChangeAndWait(self.application, Vortex.kModeSimulating)
 
         self.application.update()
 

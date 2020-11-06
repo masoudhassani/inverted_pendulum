@@ -5,29 +5,29 @@ In this project we train a reinforcement learning agent to swing up an inverted 
 
 ## Requirements
 ### Q table approach
-- Votex Studio 2020a
+- Votex Studio 2020b
 - numpy
 - matplotlib
-- Python 2 
+- Python 3.8 
 ### Deep reinforcement learning approach
-- Votex Studio 2020a
+- Votex Studio 2020b
 - numpy
 - matplotlib
-- Python 2
+- Python 3.8
 #### How to set up Python and required packages
-- Install python 2.7 64 bit in its default location
+- Install python 3.8 64 bit in its default location
 ```
-https://www.python.org/ftp/python/2.7.13/python-2.7.13.amd64.msi
+https://www.python.org/ftp/python/3.8.6/python-3.8.6-amd64.exe
 ```
 
 - Install virtual environment: 
 ```
-c:\python27\python -m pip install virtualenv
+c:\python38\python -m pip install virtualenv
 ```
 
 - Create a virtual environment in the project folder:
 ```
-c:\python27\python -m virtualenv ml
+c:\python38\python -m virtualenv ml
 ```
 
 - Activate the virtual environment:
@@ -35,14 +35,9 @@ c:\python27\python -m virtualenv ml
 ml\Scripts\activate
 ```
 
-- Install CNTK:
+- Install TensorFlow:
 ```
-python -m pip install https://cntk.ai/PythonWheel/CPU-Only/cntk-2.7.post1-cp27-cp27m-win_amd64.whl
-```
-
-- Install keras:
-```
-python -m pip install keras
+python -m pip install tensorflow
 ```
 
 - Install matplotlib
@@ -50,8 +45,12 @@ python -m pip install keras
 python -m pip install matplotlib
 ```
 
-- Enable CNTK as Keras backend instead of TensorFlow. For this, open ```keras.json``` in the
-keras folder in the user profile folder. Then change the backend to ```cntk```
+- Install collections
+```
+python -m pip install collections
+```
+
+
 
 ## Run
 - Make sure that ```self.config_file``` in ```environment.py``` is pointing to the right path
